@@ -1,164 +1,284 @@
-​	 
+什么是Lambda表达式
+------------
 
-【注：C++14起Lambda支持默认参数】
+优点：即用即写，相比于函数对象需要定义一个类的操作，其更加轻量化，和`function`结合之后可以更加灵活的使用。
 
-一、[Lambda](https://so.csdn.net/so/search?q=Lambda&spm=1001.2101.3001.7020)简介
-----------------------------------------------------------------------------
+最常见的`lambda`的表达式写法如下
 
-`lambda`表达式是`C++11`中引入的一项新技术，利用`lambda`表达式可以编写内嵌的匿名函数，用以替换独立函数或者函数对象，并且使代码更可读。
+    auto plus = [] (int v1, int v2) -> int { return v1 + v2; }
+    int sum = plus(1, 2);
 
-Lambda 表达式完整的格式如下：
-
-    [捕获列表] (形参列表) mutable 异常列表-> 返回类型{    函数体}
-
-各项的含义：
-
-*   **捕获列表**：捕获外部变量，捕获的变量可以在函数体中使用
-    *   \[\]：默认不捕获任何变量；
-    *   \[=\]：默认以值捕获所有变量；
-    *   \[&\]：默认以引用捕获所有变量；
-    *   \[x\]：仅以值捕获x，其它变量不捕获；
-    *   \[&x\]：仅以引用捕获x，其它变量不捕获；
-    *   \[=, &x\]：默认以值捕获所有变量，但是x是例外，通过引用捕获；
-    *   \[&, x\]：默认以引用捕获所有变量，但是x是例外，通过值捕获；
-    *   \[this\]：通过引用捕获当前对象（其实是复制指针）；
-    *   \[\*this\]：通过传值方式捕获当前对象；
-*   **形参列表**：和普通函数的形参列表一样（可省略，即无参数列表）
-*   **`mutable`**：`mutable `关键字，如果有，则表示在函数体中可以修改捕获变量
-*   **异常列表**：`noexcept / throw(...)`,和普通函数的异常列表一样，可省略，即代表可能抛出任何类型的异常。
-*   **返回类型**：和函数的返回类型一样。可省略，如省略，编译器将自动推导返回类型。
-*   **函数体**：代码实现,不能省略。
-
-==`lambda`表达式因为禁用了赋值操作符，所以不可以直接赋值==，即使他们形参和返回值完全一样，但是`lambda`表达式没有禁用复制构造函数，所以你仍然可以用一个`lambda`表达式去初始化另外一个`lambda`表达式而产生副本，并且`lambda`表达式也可以赋值给相对应的函数指针，这也使得你**完全可以把`lambda`表达式看成对应函数类型的指针。**
-
-另外，lambda表达式不能有默认参数，不支持可变参数。
-
-**使用示例：**
+这里只是计算两个数的和，我们一般情况下肯定是不会这么用的，更多的时候，我们都是和`stl`的一些算法结合使用，例如自定义一个结构体的排序规则和打印。
 
 ```C++
-void LambdaDemo()
+struct Item
 {
-    int a = 1;
-    int b = 2;
-    auto lambda = [a, b](int x, int y) mutable throw() -> bool
-    {
-        return a + b > x + y;
-    };
-    bool ret = lambda(3, 4);
-}
-```
-
-### 二、`lambda`编译器实现原理
-
-编译器实现 **lambda 表达式**大致分为一下几个步骤：
-
-1.  创建 **lambda匿名类**，实现构造函数，使用 lambda 表达式的函数体重载 **operator()**（所以 lambda 表达式 也叫匿名函数对象）
-2.  创建 lambda 对象
-3.  通过对象调用 **operator()**
-
-所以编译器将 lambda 表达式翻译后的代码：
-
-```C++
-class lambda_xxxx
-{
-private:
+    Item(int aa, int bb) : a(aa), b(bb) {} 
     int a;
     int b;
+};
+	
+int main()
+{
+    std::vector<Item> vec;
+    vec.push_back(Item(1, 19));
+    vec.push_back(Item(10, 3));
+    vec.push_back(Item(3, 7));
+    vec.push_back(Item(8, 12));
+    vec.push_back(Item(2, 1));
+
+    // 根据Item中成员a升序排序
+    std::sort(vec.begin(), vec.end(),
+        [] (const Item& v1, const Item& v2) { return v1.a < v2.a; });
+
+    // 打印vec中的item成员
+    std::for_each(vec.begin(), vec.end(),
+        [] (const Item& item) { std::cout << item.a << " " << item.b << std::endl; });
+	return 0;
+}
+```
+
+这样的写法让我们代码更加简洁、清晰，可读性更强。
+
+在c++的官方文档中，给出了`lamda`表达式的四种写法，这里知乎的排版有点难用，所以直接在[官方文档](https://link.zhihu.com/?target=https%3A//en.cppreference.com/w/cpp/language/lambda)上截了一个图。
+
+![](https://pic4.zhimg.com/v2-cd4aeb07f429759ecbd6943adbe6449b_r.jpg)
+
+下面介绍一下`lambda`的四种表达式的含义，以及表达式中各个成分的，其实说白就是在自己理解的基础上翻译一下官方文档。
+
+### **四种表达式的含义**
+
+（1）完整的`lambda`表达式，包含了`lambda`表达式的所有成分。
+
+（2）常量`lambda`表达式，捕获的变量都是常量，不能在`lambda`表达式的`body`中进行修改。
+
+（3）和（2）基本一致，唯一的区别就是，`lambda`表达式的函数返回值可以通过函数体推导出来。一般情况函数返回值类型明确或者没有返回值的情况下可以这样写。
+
+（4）`lambda`表达式的函数没有任何参数，但是可以添加`lambda-specifiers`，`lambda-specifiers`是什么我们后续再介绍。
+
+### **lambda表达式各个成员的解释**
+
+**`captures` 捕获列表，**lambda可以把上下文变量以值或引用的方式捕获，在body中直接使用。
+
+**`tparams `模板参数列表**(c++20引入)，让lambda可以像模板函数一样被调用。
+
+**`params` 参数列表**，有一点需要注意，在c++14之后允许使用auto左右参数类型。
+
+**`lambda-specifiers`lambda说明符**_，_ 一些可选的参数，这里不多介绍了，有兴趣的读者可以去官方文档上看。这里比较常用的参数就是`mutable`和`exception`。其中，表达式(1)中没有`trailing-return-type`，是因为包含在这一项里面的。
+
+**_trailing-return-type_ 返回值类型**，一般可以省略掉，由编译器来推导。
+
+**_body_ 函数体**，函数的具体逻辑。
+
+捕获列表
+----
+
+上面介绍完了`lambda`表达式的各个成分，其实很多部分和正常的函数没什么区别，其中最大的一个不同点就是捕获列表。我在刚开始用`lambda`表达式的时候，还一直以为这个没啥用，只是用一个 \[\] 来标志着这是一个`lambda`表达式。后来了解了才知道，原来这个捕获列表如此强大，甚至我觉得捕获列表就是lambda表达式的灵魂。下面先介绍几种常用的捕获方式。
+
+**\[\]** 什么也不捕获，无法lambda函数体使用任何
+
+**\[=\]** 按值的方式捕获所有变量
+
+**\[&\]** 按引用的方式捕获所有变量
+
+**\[=, &a\]** 除了变量a之外，按值的方式捕获所有局部变量，变量a使用引用的方式来捕获。这里可以按引用捕获多个，例如 \[=, &a, &b,&c\]。这里注意，如果前面加了=，后面加的具体的参数必须以引用的方式来捕获，否则会报错。
+
+**\[&, a\]** 除了变量a之外，按引用的方式捕获所有局部变量，变量a使用值的方式来捕获。这里后面的参数也可以多个，例如 \[&, a, b, c\]。这里注意，如果前面加了&，后面加的具体的参数必须以值的方式来捕获。
+
+**\[a, &b\]** 以值的方式捕获a，引用的方式捕获b，也可以捕获多个。
+
+**\[this\]** 在成员函数中，也可以直接捕获this指针，其实在成员函数中，\[=\]和\[&\]也会捕获this指针。
+
+  
+
+```C++
+#include <iostream>
+
+int main()
+{
+    int a = 3;
+    int b = 5;
+    
+    // 按值来捕获
+    auto func1 = [a] { std::cout << a << std::endl; };
+    func1();
+
+    // 按值来捕获
+    auto func2 = [=] { std::cout << a << " " << b << std::endl; };
+    func2();
+
+    // 按引用来捕获
+    auto func3 = [&a] { std::cout << a << std::endl; };
+    func3();
+
+    // 按引用来捕获
+    auto func4 = [&] { std::cout << a << " " << b << std::endl; };
+    func4();
+}
+```
+
+编译器如何看待Lambda表达式
+----------------
+
+我们把`lambda`表达式看成一个函数，那编译器怎么看待我们写的`lambda`呢？
+
+其实，编译器会把我们写的lambda表达式翻译成一个类，并重载 operator()来实现。比如我们写一个lambda表达式为
+
+```C++
+auto plus = [] (int a, int b) -> int { return a + b; }
+int c = plus(1, 2);
+```
+
+那么编译器会把我们写的表达式翻译为
+
+```C++
+// 类名是我随便起的
+class LambdaClass
+{
 public:
-    lambda_xxxx(int _a, int _b) :a(_a), b(_b)
+    int operator () (int a, int b) const
     {
-    }
-    bool operator()(int x, int y) throw()
-    {
-        return a + b > x + y;
+        return a + b;
     }
 };
-void LambdaDemo()
-{
-    int a = 1;
-    int b = 2;
-    lambda_xxxx lambda = lambda_xxxx(a, b);
-    bool ret = lambda.operator()(3, 4);
-}
+
+LambdaClass plus;
+int c = plus(1, 2);
 ```
 
-其中，类名 `lambda_xxxx` 的 `xxxx` 是为了防止命名冲突加上的。
+调用的时候编译器会生成一个Lambda的对象，并调用`opeartor ()`函数。（**备注：这里的编译的翻译结果并不和真正的结果完全一致，只是把最主要的部分体现出来，其他的像类到函数指针的转换函数均省略**）
 
-1.  `lambda` 表达式中的**捕获列表**，对应 `lambda_xxxx` 类的 **private 成员**
-2.  `lambda`  表达式中的**形参列表**，对应 `lambda_xxxx` 类成员函数 **operator() 的形参列表**
-3.  `lambda`  表达式中的 **mutable**，表明 `lambda_xxxx` 类成员函数 **operator() 的是否具有常属性 `const`**，即是否是 **常成员函数**
-4.  `lambda`  表达式中的**返回类型**，对应`lambda_xxxx`类成员函数 **operator() 的返回类型**
-5.  `lambda`  表达式中的**函数体**，对应`lambda_xxxx`类成员函数 **operator() 的函数体**
-
-另外，`lambda` 表达 捕获列表的捕获方式，也影响 对应`lambda_xxxx` 类的 `private` 成员 的类型
-
-1.  值捕获：`private `成员的类型与捕获变量的类型一致
-2.  引用捕获：`private` 成员 的类型是捕获变量的引用类型
-
-但有一种特殊情况需要说明：
-
-如果 lambda 表达式不捕获任何外部变量，且有`lambda_xxxx `类到 **函数指针** 的类型转换，会有额外的代码生成，例如：
+上面是一种调用方式，那么如果我们写一个复杂一点的`lambda`表达式，表达式中的成分会如何与类的成分对应呢？我们再看一个 值捕获 例子。
 
 ```C++
-typedef int(_stdcall *Func)(int);
-int Test(Func func)
-{
-	return func(1);
-}
-void LambdaDemo()
-{
-	Test([](int i) {
-		return i;
-	});
-}
+int x = 1; int y = 2;
+auto plus = [=] (int a, int b) -> int { return x + y + a + b; };
+int c = plus(1, 2);
 ```
 
-Test 函数接受一个函数指针作为参数，并调用这个函数指针。实际调用 Test 时，传入的参数却是一个 Lambda 表达式，所以这里有一个类型的隐式转换：`lambda_xxxx`=> 函数指针。
-
-上面已经提到，==Lambda 表达式就是一个 `lambda_xxxx` 类的匿名对象==，与函数指针之间按理说不应该存在转换，但是上述代码却没有问题。
-
-其问题关键在于，上述代码中，lambda 表达式没有捕获任何外部变量，即 `lambda_xxxx` 类没有任何成员变量，在 `operator()` 中也就不会用到任何成员变量，也就是说，`operator() `虽然是个成员函数，它却不依赖 this 就可以调用。
-
-因为不依赖 `this`，所以 一个 `lambda_xxxx `类的匿名对象与函数指针之间就存在转换的可能。
-
-大致过程如下：
-
-1.  在 `lambda_xxxx `类中生成一个**静态函数**，静态函数的函数签名(函数原型)**与 `operator()` 一致**，在这个静态函数中，通过一个**空指针**去调用该类的 `operator()`
-2.  在 `lambda_xxxx `重载与函数指针的类型转换操作符，在这个函数中，返回静态函数的地址。
+编译器的翻译结果为
 
 ```C++
-typedef int(_stdcall *Func)(int);
- 
-class lambda_xxxx 
+class LambdaClass
 {
+public:
+    LambdaClass(int xx, int yy)
+    : x(xx), y(yy) {}
+
+    int operator () (int a, int b) const
+    {
+        return x + y + a + b;
+    }
+
 private:
-	//没有捕获任何外部变量，所有没有成员
-public:
-        /*...省略其他代码...*/
-	int operator()(int i)
-	{
-		return i;
-	}
-	static int _stdcall lambda_invoker_stdcall(int i)
-	{
-		return ((lambda_xxxx *)nullptr)->operator()(i);
-	}
- 
-	operator Func() const
-	{
-		return &lambda_invoker_stdcall;
-	}
-};
- 
-int Test(Func func)
-{
-	return func(1);
+    int x;
+    int y;
 }
-void LambdaDemo()
-{
-	auto lambda = lambda_xxxx ();
-	Func func = lambda.operator Func();
-	Test(func);
-}
+
+int x = 1; int y = 2;
+LambdaClass plus(x, y);
+int c = plus(1, 2);
 ```
 
+  
+
+
+其实这里就可以看出，值捕获时，编译器会把捕获到的值作为类的成员变量，并且变量是以值的方式传递的。需要注意的时，==如果所有的参数都是值捕获的方式，那么生成的operator()函数是`const`函数的，是无法修改捕获的值的==，哪怕这个修改不会改变lambda表达式外部的变量，如果想要在函数内修改捕获的值，需要加上关键字 mutable。向下面这样的形式。
+
+```C++
+int x = 1; int y = 2;
+auto plus = [=] (int a, int b) mutable -> int { x++; return x + y + a + b; };
+int c = plus(1, 2);
+```
+
+  
+
+
+我们再来看一个引用捕获的例子。
+
+```C++
+int x = 1; int y = 2;
+auto plus = [&] (int a, int b) -> int { x++; return x + y + a + b;};
+int c = plus(1, 2);
+```
+
+编译器的翻译结果为
+
+```C++
+class LambdaClass
+{
+public:
+    LambdaClass(int& xx, int& yy)
+    : x(xx), y(yy) {}
+
+    int operator () (int a, int b)
+    {
+        x++;
+        return x + y + a + b;
+    }
+
+private:
+    int &x;
+    int &y;
+};
+```
+
+我们可以看到以引用的方式捕获变量，和值捕获的方式有3个不同的地方：1. 参数引用的方式进行传递; 2. 引用捕获在函数体修改变量，会直接修改lambda表达式外部的变量；3. `opeartor()函数不是const的`。
+
+针对上面的集中情况，我们把`lambda`的各个成分和类的各个成分对应起来就是如下的关系:
+
+**捕获列表**，对应`LambdaClass`类的**private成员**。
+
+**参数列表**，对应`LambdaClass`类的成员函数的operator()的形参列表
+
+**mutable**，对应` LambdaClass`类成员函数 **operator() 的`const`属性 ，但是只有在捕获列表捕获的参数不含有引用捕获的情况下才会生效，**因为捕获列表只要包含引用捕获，那operator()函数就一定是非`const`函数**。**
+
+**返回类型**，对应 `LambdaClass`类成员函数 **operator() 的返回类型**
+
+**函数体，**对应 `LambdaClass`类成员函数 **operator() 的函数体。**
+
+**引用捕获和值捕获不同的一点就是，对应的成员是否为引用类型。** 
+
+
+
+==在常方法中可以修改类中普通引用成员变量==
+
+> ```C++
+> #include <iostream>
+> #include <functional>
+> using namespace std;
+> class obj{
+> public:
+> 
+> 	obj(int& val ): b(val) {}
+> 
+> 	void operator()(int & p ) const  
+> 	{
+> 		b = 10 ; 
+> 	}
+> 	void show()
+> 	{
+> 		cout << b << endl ; 
+> 	}
+> 
+> private:
+> 	int& b ; 
+> } ;
+> 
+> int main()
+> {	
+> 	int a = 10 ;  
+> 	obj t1(a) ; 
+>    t1() ; 
+> 	t1.show() ; 
+> 
+> 
+>    return 0 ; 
+> }
+> ```
+>
+> ![image-20230927210536666](assets/image-20230927210536666.png)
+
+
+
+  
