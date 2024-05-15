@@ -14,8 +14,6 @@
 
 + `delete p ` :调用析构函数；再`free(p)` : **如果指针`p`**指向的是内置类型，则`delete p`和`free p ` 没有什么区别，但如果指针指向的是对象，则两者还是存在很大的区别。
 
-
-
 ![image-20230906154252640](assets/image-20230906154252640.png)
 
 #### `vc6.0`编译器`new`和`delete` 所执行的具体步骤
@@ -57,10 +55,10 @@ operator delete(pc); // 释放内存 ， 内部调用free(pc)
 `Complex* p = new Complex[3];` 
 
 ```C++
-void* mem = operator new( sizeof(Complex) * 3 ); //分配內存，内部调用malloc(sizeof(Complex) ) ; 
+void* mem = operator new( sizeof(Complex) * 3 ); //分配內存，内部调用malloc(sizeof(Complex) * 3 ) ; 
 pc = static_cast<Complex*>(mem); // 转型
 
- //构造函数 Complex::Complex( pc , 1 , 2 ) , 这里会调用三次构造函数
+//构造函数 Complex::Complex( pc , 1 , 2 ) , 这里会调用三次构造函数
 pc->Complex::Complex(1,2) ; 
 return pc ; 
 ```
@@ -74,7 +72,7 @@ return pc ;
 ```C++
 // 这里调用三次析构函数, 根据第一个对象地址的前方的四个字节确定需要调用析构函数的次数
 Complex::~Complex(pc); // 析构函数
-operator delete(pc); // 释放内存 ， 根据cookie的大小内部调用free(pc)归还当前块的内存 
+operator delete(pc); // 释放内存 ，根据cookie的大小内部调用free(pc)归还当前块的内存 
 ```
 
 **`array new` 一定要搭配`array delete` 的原因**
@@ -88,9 +86,9 @@ operator delete(pc); // 释放内存 ， 根据cookie的大小内部调用free(p
 **混用`new`和`delete` 造成内存泄漏**
 
 ```C++
-#include <iostream>
+#include <iostream> 
 using namespace std ; 
-void* operator new[](size_t size)
+void* operator new[](size_t size)  
 {
 	void *p = malloc(size) ; 
 	if (p == nullptr)
@@ -208,7 +206,7 @@ int main()
 {
 	try
 	{
-		int *q = new int[10];
+		int *q = new Test[10];
 		delete []q ;
 	}
 	catch (const bad_alloc &err)
@@ -241,6 +239,7 @@ void* operator new(size_t size)
 	cout << "operator new addr:" << p << endl;
 	return p;
 }
+
 // delete p;  调用p指向对象的析构函数、再调用operator delete释放内存空间
 void operator delete(void *ptr)
 {
@@ -271,8 +270,11 @@ private:
 };
 int main()
 {
-	Test *p2 = new Test[5];
+
+   
+	Test *p2 = new Test[5] ; 
 	cout << "p2:" << p2 << endl;
+   
 	delete[] p2; // Test[0]对象析构， 直接free(p2)
 	return 0;
 }

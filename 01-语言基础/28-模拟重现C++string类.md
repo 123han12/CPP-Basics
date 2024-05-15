@@ -2,8 +2,6 @@
 
 
 
-
-
 #### 根据需求写出对应的`string` 类的所需要的函数的代码
 
 ```C++ 
@@ -67,7 +65,7 @@
 #define MY_STRING
 #include <iostream>
 #include <cstring> 
-class String  ; 
+class String  ;  
 String operator+(const String &lhs, const String &rhs)  ; 
 std::ostream& operator<<(std::ostream &out, const String &str) ; 
 class String{
@@ -120,7 +118,6 @@ public:
         _pstr = new char[strlen(str._pstr) + 1 ] ; 
         strcpy(_pstr , str._pstr) ;  
         return *this ; 
-
     }
 
     int length()const  

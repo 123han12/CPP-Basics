@@ -1,7 +1,5 @@
 ### `string`字符串对象的迭代器
 
-
-
 **迭代器概念理解**
 
 > + 迭代器属于**容器类型(容器，置物之所也)**的嵌套类，提供了一套**统一标准的遍历容器的接口**。
@@ -45,119 +43,119 @@ String operator+(const String &lhs, const String &rhs)  ;
 std::ostream& operator<<(std::ostream &out, const String &str) ; 
 class String{
 public:
-    friend String operator+(const String &lhs, const String &rhs)  ; 
-    friend std::ostream& operator<<(std::ostream &out, const String &str) ;
+ friend String operator+(const String &lhs, const String &rhs)  ; 
+ friend std::ostream& operator<<(std::ostream &out, const String &str) ;
 
-    String(const char* p = nullptr ) 
-    {
-        std::cout<< "construct func" << std::endl ; 
+ String(const char* p = nullptr ) 
+ {
+     std::cout<< "construct func" << std::endl ; 
 
-        if(p == nullptr )
-        {
-            _pstr = new char[1] ; 
-            *_pstr = '\0' ; 
-        }
-        else {
-            _pstr = new char[strlen(p) + 1 ] ; 
-            strcpy(_pstr , p ) ; 
-        }
-    } 
-    String(const String& str )  
-    {
-        _pstr = new char[strlen(str._pstr) + 1 ] ; 
-        strcpy(_pstr , str._pstr) ;  
-    }
-    ~String()
-    {   
-        delete []_pstr ; 
-        _pstr = nullptr ; 
-    } 
+     if(p == nullptr )
+     {
+         _pstr = new char[1] ; 
+         *_pstr = '\0' ; 
+     }
+     else {
+         _pstr = new char[strlen(p) + 1 ] ; 
+         strcpy(_pstr , p ) ; 
+     }
+ } 
+ String(const String& str )  
+ {
+     _pstr = new char[strlen(str._pstr) + 1 ] ; 
+     strcpy(_pstr , str._pstr) ;  
+ }
+ ~String()
+ {   
+     delete []_pstr ; 
+     _pstr = nullptr ; 
+ } 
 
-    bool operator>(const String &str) const 
-    {
-        return strcmp(_pstr , str._pstr ) > 0 ; 
-    }
-    bool operator<(const String &str)const 
-    {
-        return strcmp(_pstr , str._pstr ) < 0 ; 
-    } 
-    bool operator==(const String &str)const
-    {
-        return strcmp(_pstr , str._pstr ) == 0 ;  
-    }
-    String& operator=(const String &str) 
-    {
-        if(this == &str ) return *this ; 
+ bool operator>(const String &str) const 
+ {
+     return strcmp(_pstr , str._pstr ) > 0 ; 
+ }
+ bool operator<(const String &str)const 
+ {
+     return strcmp(_pstr , str._pstr ) < 0 ; 
+ } 
+ bool operator==(const String &str)const
+ {
+     return strcmp(_pstr , str._pstr ) == 0 ;  
+ }
+ String& operator=(const String &str) 
+ {
+     if(this == &str ) return *this ; 
 
-        delete []_pstr ; 
-        _pstr = new char[strlen(str._pstr) + 1 ] ; 
-        strcpy(_pstr , str._pstr) ;  
-        return *this ; 
+     delete []_pstr ; 
+     _pstr = new char[strlen(str._pstr) + 1 ] ; 
+     strcpy(_pstr , str._pstr) ;  
+     return *this ; 
 
-    }
+ }
 
-    int length()const  
-    {
-        return strlen(_pstr) ; 
-    }
+ int length()const  
+ {
+     return strlen(_pstr) ; 
+ }
 
-    const char* c_str()
-    {
-        return _pstr ; 
-    }  
-    char& operator[](int index) 
-    {
-        return _pstr[index] ; 
-    }
-    const char& operator[](int index) const
-    {
-        return _pstr[index]; 
-    }
+ const char* c_str()
+ {
+     return _pstr ; 
+ }  
+ char& operator[](int index) 
+ {
+     return _pstr[index] ; 
+ }
+ const char& operator[](int index) const
+ {
+     return _pstr[index]; 
+ }
 class iterator{
 public:
-    iterator(char* p = nullptr ) : _p(p){} 
-    bool operator!=(const iterator &it )
-    {
-        return _p != it._p ; 
-    }
-    void operator++()
-    {
-        ++_p ; 
-    }
-    char& operator*() {
-        return *_p ; 
-    }
+ iterator(char* p = nullptr ) : _p(p){} 
+ bool operator!=(const iterator &it )
+ {
+     return _p != it._p ; 
+ }
+ void operator++()
+ {
+     ++_p ; 
+ }
+ char& operator*() {
+     return *_p ; 
+ }
 private:
-    char *_p ;  
+ char *_p ;  
 } ; 
 // 提供接口
 iterator begin()
 {
-    return iterator(_pstr) ; 
+ return iterator(_pstr) ; 
 }
 iterator end()
 {
-    return iterator((_pstr+ length() )) ;  
+ return iterator((_pstr+ length() )) ;  
 }
 private:
-    char*  _pstr ; 
+ char*  _pstr ; 
 
 } ; 
 
 String operator+(const String &lhs, const String &rhs)
 {   
-   // 需要保证tmp申请的空间被释放了。
-   String tmp ; 
-   tmp._pstr = new char[strlen(lhs._pstr) + strlen(rhs._pstr) + 1 ] ; 
-   strcpy(tmp._pstr , lhs._pstr ) ; 
-   strcat(tmp._pstr , rhs._pstr ) ;
-   return tmp ; 
+// 需要保证tmp申请的空间被释放了。
+String tmp ; 
+tmp._pstr = new char[strlen(lhs._pstr) + strlen(rhs._pstr) + 1 ] ; 
+strcpy(tmp._pstr , lhs._pstr ) ; 
+strcat(tmp._pstr , rhs._pstr ) ;
+return tmp ; 
 }  
 
 std::ostream& operator<<(std::ostream &out, const String &str)
 {
-    out << str._pstr ; 
-    return out ; 
+ out << str._pstr ; 
+ return out ; 
 }
 
 ```
